@@ -2,10 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation template to create a single EC2 instance
 
 Parameters:
-  KeyName:
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
-    Type: String
-
   InstanceType:
     Description: EC2 instance type
     Type: String
