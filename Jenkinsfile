@@ -16,6 +16,7 @@ pipeline {
                 script {
                     // Use AWS CLI to create the CloudFormation stack for EC2
                     bat '''
+                        powershell -Command "aws configure set region us-east-1"
                         powershell -Command "aws cloudformation create-stack --stack-name MyEC2InstanceStack --template-body file://cloudformation_ec2.yaml --parameters ParameterKey=InstanceType,ParameterValue=t2.micro --capabilities CAPABILITY_IAM"
                     '''
                 }
@@ -26,6 +27,7 @@ pipeline {
                 script {
                     // Wait for the CloudFormation stack creation to complete
                     bat '''
+                        powershell -Command "aws configure set region us-east-1"
                         powershell -Command "aws cloudformation wait stack-create-complete --stack-name MyEC2InstanceStack"
                     '''
                 }
@@ -36,6 +38,7 @@ pipeline {
                 script {
                     // Retrieve the public IP of the created EC2 instance
                     def ec2InstanceDetails = bat(script: '''
+                        powershell -Command "aws configure set region us-east-1"
                         powershell -Command "(aws ec2 describe-instances --filters Name=tag:Name,Values=MyEC2Instance --query Reservations[*].Instances[*].PublicIpAddress --output text)"
                     ''', returnStdout: true).trim()
                     echo "EC2 Public IP: ${ec2InstanceDetails}"
