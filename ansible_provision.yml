@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Get stack outputs
+      amazon.aws.cloudformation_info:
+        stack_name: "{{ stack_name }}" # Use the stack name passed from Jenkins
+      register: stack_info
+
+    - name: Extract EC2 instance ID from the stack
+      set_fact:
+        ec2_instance_id: "{{ stack_info.stacks[0].outputs | selectattr('OutputKey', 'equalto', 'InstanceId') | map(attribute='OutputValue') | first }}"
+
+    - name: Wait for the EC2 instance to be in running state
+      amazon.aws.ec2_instance_info:
+        instance_ids: "{{ ec2_instance_id }}"
+      register: ec2_info
+
+    - name: Add EC2 instance to inventory
+      add_host:
+        name: "{{ ec2_info.instances[0].public_dns_name }}"
+        ansible_user: ec2-user
+
+    - name: Test SSH connection
+      ping:
