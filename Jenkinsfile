@@ -2,14 +2,13 @@ pipeline {
     agent any
     environment {
         AWS_CREDENTIALS = credentials('AWS Admin User')  // AWS credentials stored in Jenkins
-        GIT_CREDENTIALS = credentials('GitHub Personal Token')  // GitHub token stored in Jenkins
     }
     stages {
         stage('Checkout SCM') {
             steps {
                 // Checkout the CloudFormation template and Ansible playbook from GitHub
                 checkout([$class: 'GitSCM', branches: [[name: '*/dev']],
-                userRemoteConfigs: [[url: 'https://github.com/roshniwakodikar/JenkinsPractice.git', credentialsId: 'GitHub Personal Token']]])
+                userRemoteConfigs: [[url: 'https://github.com/roshniwakodikar/JenkinsPractice.git']]])
             }
         }
         stage('Deploy CloudFormation Stack') {
