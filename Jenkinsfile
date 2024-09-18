@@ -50,7 +50,7 @@ pipeline {
                 script {
                     // Use Ansible to configure the EC2 instance via SSH (Ansible playbook is in the Git repo)
                     bat '''
-                        ansible-playbook -i "${EC2_PUBLIC_IP},"  ansible_provision.yaml
+                        ansible-playbook -i "${EC2_PUBLIC_IP}," ansible_provision.yaml
                     '''
                 }
             }
