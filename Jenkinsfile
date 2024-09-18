@@ -1,9 +1,5 @@
 pipeline {
     agent any
-    environment {
-        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')  // AWS credentials stored in Jenkins
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')  // AWS credentials stored in Jenkins
-    }
     stages {
         stage('Checkout SCM') {
             steps {
@@ -14,38 +10,44 @@ pipeline {
         }
         stage('Deploy CloudFormation Stack') {
             steps {
-                script {
-                    // Use AWS CLI to create the CloudFormation stack for EC2
-                    bat '''
-                        powershell -Command "aws configure set region us-east-1"
-                        powershell -Command "aws cloudformation create-stack --stack-name MyEC2InstanceStack --template-body file://cloudformation_ec2.yaml --parameters ParameterKey=InstanceType,ParameterValue=t2.micro --capabilities CAPABILITY_IAM"
-                    '''
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                    script {
+                        // Use AWS CLI to create the CloudFormation stack for EC2
+                        bat '''
+                            powershell -Command "aws configure set region us-east-1"
+                            powershell -Command "aws cloudformation create-stack --stack-name MyEC2InstanceStack --template-body file://cloudformation_ec2.yaml --parameters ParameterKey=InstanceType,ParameterValue=t2.micro --capabilities CAPABILITY_IAM"
+                        '''
+                    }
                 }
             }
         }
         stage('Wait for Stack Completion') {
             steps {
-                script {
-                    // Wait for the CloudFormation stack creation to complete
-                    bat '''
-                        powershell -Command "aws configure set region us-east-1"
-                        powershell -Command "aws cloudformation wait stack-create-complete --stack-name MyEC2InstanceStack"
-                    '''
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                    script {
+                        // Wait for the CloudFormation stack creation to complete
+                        bat '''
+                            powershell -Command "aws configure set region us-east-1"
+                            powershell -Command "aws cloudformation wait stack-create-complete --stack-name MyEC2InstanceStack"
+                        '''
+                    }
                 }
             }
         }
         stage('Get EC2 Public IP') {
             steps {
-                script {
-                    // Retrieve the public IP of the created EC2 instance
-                    def ec2InstanceDetails = bat(script: '''
-                        powershell -Command "aws configure set region us-east-1"
-                        powershell -Command "(aws ec2 describe-instances --filters Name=tag:Name,Values=MyEC2Instance --query Reservations[*].Instances[*].PublicIpAddress --output text)"
-                    ''', returnStdout: true).trim()
-                    echo "EC2 Public IP: ${ec2InstanceDetails}"
-                    
-                    // Store the EC2 public IP in an environment variable for Ansible
-                    env.EC2_PUBLIC_IP = ec2InstanceDetails
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-id']]) {
+                    script {
+                        // Retrieve the public IP of the created EC2 instance
+                        def ec2InstanceDetails = bat(script: '''
+                            powershell -Command "aws configure set region us-east-1"
+                            powershell -Command "(aws ec2 describe-instances --filters Name=tag:Name,Values=MyEC2Instance --query Reservations[*].Instances[*].PublicIpAddress --output text)"
+                        ''', returnStdout: true).trim()
+                        echo "EC2 Public IP: ${ec2InstanceDetails}"
+                        
+                        // Store the EC2 public IP in an environment variable for Ansible
+                        env.EC2_PUBLIC_IP = ec2InstanceDetails
+                    }
                 }
             }
         }
