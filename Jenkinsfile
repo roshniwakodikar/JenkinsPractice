@@ -22,7 +22,7 @@ pipeline {
                 script {
                     // Pass the stack name to the Ansible playbook
                     sh '''
-                        ansible-playbook ansible_provision.yml -e "stack_name=$CFN_STACK_NAME"
+                        ansible-playbook ansible_provision.yaml -e "stack_name=$CFN_STACK_NAME"
                     '''
                 }
             }
